@@ -1,0 +1,108 @@
+:root {
+  --bg: #14121a;
+  --panel: #1b1922;
+  --panel-2: #23202c;
+  --line: #2f2b3a;
+  --text: #ece6dc;
+  --muted: #9a92a6;
+  --accent: #e8875f;
+  --ok: #7fd18b;
+  --warn: #f2c35b;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+#layout { display: flex; height: 100vh; }
+
+#stage { position: relative; flex: 1 1 auto; min-width: 320px; overflow: hidden; }
+#stage canvas { display: block; width: 100%; height: 100%; }
+
+#overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+#hud {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px 12px 84px; /* trafik ışıklarına yer */
+  -webkit-app-region: drag;
+  background: linear-gradient(to bottom, rgba(20,18,26,.85), rgba(20,18,26,0));
+}
+.brand { font-weight: 700; letter-spacing: .02em; font-size: 14px; }
+.status {
+  display: flex; align-items: center; gap: 7px;
+  color: var(--muted); font-size: 12px;
+  background: rgba(255,255,255,.05); border: 1px solid var(--line);
+  padding: 4px 10px; border-radius: 999px;
+}
+.status .dot { width: 7px; height: 7px; border-radius: 50%; background: #6b6478; }
+.status.here .dot { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.status.busy .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.status.ask  .dot { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+
+.actions { margin-left: auto; display: flex; gap: 8px; -webkit-app-region: no-drag; }
+button {
+  font: inherit; font-size: 12px; font-weight: 600;
+  color: #1b1410; background: var(--accent);
+  border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer;
+}
+button:hover { filter: brightness(1.08); }
+button.ghost { background: rgba(255,255,255,.07); color: var(--text); border: 1px solid var(--line); }
+
+#divider { flex: 0 0 5px; cursor: col-resize; background: var(--line); }
+#divider:hover, #divider.dragging { background: var(--accent); }
+
+#terminal-panel {
+  flex: 0 0 44%; min-width: 360px; display: flex; flex-direction: column;
+  background: var(--panel);
+}
+.term-bar {
+  display: flex; align-items: center; gap: 10px;
+  height: 40px; padding: 0 14px; border-bottom: 1px solid var(--line);
+  -webkit-app-region: drag;
+}
+.term-title { font: 600 12px ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); }
+.term-hint { margin-left: auto; font-size: 11px; color: var(--muted); }
+#terminal { flex: 1; padding: 8px 4px 4px 10px; min-height: 0; user-select: text; }
+#terminal .xterm { height: 100%; }
+#terminal .xterm-viewport { background-color: transparent !important; }
+#terminal .xterm-viewport::-webkit-scrollbar { width: 8px; }
+#terminal .xterm-viewport::-webkit-scrollbar-thumb { background: #3a3546; border-radius: 4px; }
+#terminal .xterm-viewport::-webkit-scrollbar-track { background: transparent; }
+
+/* Konuşma balonları ve isim etiketleri: sahnenin üstünde HTML */
+.bubble {
+  position: absolute; transform: translate(-50%, -100%);
+  max-width: 230px; padding: 7px 10px;
+  background: #fffaf2; color: #241c16;
+  border-radius: 12px; font-size: 12px; font-weight: 500;
+  box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  opacity: 0; transition: opacity .2s;
+}
+.bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px;
+  border: 6px solid transparent; border-bottom: 0; border-top-color: #fffaf2;
+}
+.bubble.show { opacity: 1; }
+.bubble.ask { background: #ffe9a8; }
+.bubble.ask::after { border-top-color: #ffe9a8; }
+.bubble.err { background: #ffd0c6; }
+.bubble.err::after { border-top-color: #ffd0c6; }
+.bubble code { font: 11px ui-monospace, "SF Mono", Menlo, monospace; }
+
+.tag {
+  position: absolute; transform: translate(-50%, 0);
+  padding: 2px 7px; border-radius: 6px;
+  font: 600 10px ui-monospace, "SF Mono", Menlo, monospace;
+  color: #fff; background: rgba(0,0,0,.55);
+  white-space: nowrap; transition: opacity .3s;
+}

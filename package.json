@@ -1,0 +1,23 @@
+{
+  "name": "atolye",
+  "version": "0.1.0",
+  "description": "Claude Code için 3D terminal giydirmesi",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w node-pty",
+    "postinstall": "electron-rebuild -f -w node-pty"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "node-pty": "^1.0.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.2",
+    "electron": "^37.2.0"
+  },
+  "productName": "Atölye"
+}

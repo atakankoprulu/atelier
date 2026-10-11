@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Atölye</title>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'sha256-q6r0770JtVIRJf9PSD4+Ii79dSCPXGYv58Yh9YMlSo0='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:">
+  <link rel="stylesheet" href="../node_modules/@xterm/xterm/css/xterm.css">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "../node_modules/three/build/three.module.js",
+        "three/addons/": "../node_modules/three/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main id="layout">
+    <section id="stage">
+      <div id="overlay"></div>
+      <header id="hud">
+        <div class="brand">Atölye</div>
+        <div id="status" class="status"><span class="dot"></span><span id="status-text">Claude dışarıda</span></div>
+        <div class="actions">
+          <button id="btn-summon" title="Terminalde claude'u başlatır">Claude'u çağır</button>
+          <button id="btn-demo" class="ghost" title="Sahte olaylarla sahneyi oynatır">Demo</button>
+          <button id="btn-cam" class="ghost" title="Kamera açısını değiştir">Kamera</button>
+        </div>
+      </header>
+    </section>
+    <div id="divider" title="Sürükle"></div>
+    <section id="terminal-panel">
+      <div class="term-bar">
+        <span class="term-title">terminal</span>
+        <span id="term-hint" class="term-hint"></span>
+      </div>
+      <div id="terminal"></div>
+    </section>
+  </main>
+  <script src="../node_modules/@xterm/xterm/lib/xterm.js"></script>
+  <script src="../node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
