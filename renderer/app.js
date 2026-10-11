@@ -2,7 +2,7 @@ import { World } from './scene.js';
 import { Director } from './director.js';
 import { runDemo } from './demo.js';
 
-const api = window.atolye;
+const api = window.atelier;
 const $ = (id) => document.getElementById(id);
 
 // --- 3D sahne ----------------------------------------------------------------
@@ -50,7 +50,7 @@ start();
 api.onPtyData((d) => term.write(d));
 api.onPtyExit(() => {
   alive = false;
-  term.write('\r\n\x1b[2m[kabuk kapandı — yeniden açmak için Enter]\x1b[0m\r\n');
+  term.write('\r\n\x1b[2m[shell exited — press Enter to restart]\x1b[0m\r\n');
 });
 term.onData((d) => {
   if (!alive) { if (d === '\r') { term.clear(); start(); } return; }
@@ -61,7 +61,7 @@ term.onResize(({ cols, rows }) => api.resizePty(cols, rows));
 new ResizeObserver(() => { try { fit.fit(); } catch { /* panel gizliyken */ } }).observe($('terminal'));
 term.focus();
 
-$('term-hint').textContent = 'Claude\'u çağırmak için: claude';
+$('term-hint').textContent = 'To summon Claude: claude';
 
 // Senin monitörün terminalin görünen son satırlarını gösterir.
 let lastScreen = '';

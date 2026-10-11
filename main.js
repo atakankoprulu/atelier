@@ -1,4 +1,4 @@
-// Atölye — Claude Code için 3D giydirme.
+// Atelier — Claude Code için 3D giydirme.
 // Ana süreç: gömülü terminal (node-pty), hook olaylarını dinleyen yerel HTTP sunucusu
 // ve yalnızca bu uygulamanın içindeki `claude` için geçerli hook ayarları.
 
@@ -48,7 +48,7 @@ function startHookServer() {
 
 // Hook ayarlarını ve zsh başlangıç dosyalarını userData altına yazar.
 // Kullanıcının ~/.claude/settings.json dosyasına dokunmaz: `claude` yalnızca
-// Atölye terminalinde `--settings` ile bu dosyayı yükleyecek şekilde sarılır.
+// Atelier terminalinde `--settings` ile bu dosyayı yükleyecek şekilde sarılır.
 function prepareShellEnv() {
   const dir = path.join(app.getPath('userData'), 'shell');
   const zdot = path.join(dir, 'zdotdir');
@@ -72,7 +72,7 @@ function prepareShellEnv() {
   fs.writeFileSync(path.join(zdot, '.zshrc'), [
     'HISTFILE="$HOME/.zsh_history"',
     src('.zshrc').trim(),
-    'claude() { command claude --settings "$ATOLYE_SETTINGS" "$@"; }',
+    'claude() { command claude --settings "$ATELIER_SETTINGS" "$@"; }',
     '',
   ].join('\n'));
 
@@ -83,16 +83,16 @@ function startTerminal(cols, rows) {
   if (term) return;
   const { settingsPath, zdot } = prepareShellEnv();
   const shell = process.env.SHELL || '/bin/zsh';
-  // Atölye başka bir Claude oturumunun içinden açıldıysa onun izlerini taşıma.
+  // Atelier başka bir Claude oturumunun içinden açıldıysa onun izlerini taşıma.
   const inherited = Object.fromEntries(Object.entries(process.env)
     .filter(([k]) => !k.startsWith('CLAUDE_CODE_') && k !== 'CLAUDECODE' && !k.startsWith('ELECTRON_')));
   const env = {
     ...inherited,
     TERM: 'xterm-256color',
     COLORTERM: 'truecolor',
-    TERM_PROGRAM: 'Atolye',
-    ATOLYE_PORT: String(hookPort),
-    ATOLYE_SETTINGS: settingsPath,
+    TERM_PROGRAM: 'Atelier',
+    ATELIER_PORT: String(hookPort),
+    ATELIER_SETTINGS: settingsPath,
   };
   if (path.basename(shell) === 'zsh') env.ZDOTDIR = zdot;
 
@@ -119,27 +119,27 @@ function createWindow() {
     minHeight: 560,
     backgroundColor: '#14121a',
     titleBarStyle: 'hiddenInset',
-    title: 'Atölye',
+    title: 'Atelier',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
-  win.loadFile(path.join(__dirname, 'renderer', 'index.html'), { query: { cam: process.env.ATOLYE_CAMERA || '0' } });
+  win.loadFile(path.join(__dirname, 'renderer', 'index.html'), { query: { cam: process.env.ATELIER_CAMERA || '0' } });
   win.on('closed', () => { win = null; });
 
-  if (process.env.ATOLYE_SNAPSHOT) scheduleSnapshots();
+  if (process.env.ATELIER_SNAPSHOT) scheduleSnapshots();
 }
 
-// Geliştirme için: ATOLYE_SNAPSHOT=dizin ATOLYE_SNAPSHOT_AT=3000,8000 ile
-// belirli anlarda ekran görüntüsü alıp çıkar. ATOLYE_DEMO=1 demoyu başlatır.
+// Geliştirme için: ATELIER_SNAPSHOT=dizin ATELIER_SNAPSHOT_AT=3000,8000 ile
+// belirli anlarda ekran görüntüsü alıp çıkar. ATELIER_DEMO=1 demoyu başlatır.
 function scheduleSnapshots() {
-  const outDir = process.env.ATOLYE_SNAPSHOT;
-  const times = (process.env.ATOLYE_SNAPSHOT_AT || '4000').split(',').map(Number);
+  const outDir = process.env.ATELIER_SNAPSHOT;
+  const times = (process.env.ATELIER_SNAPSHOT_AT || '4000').split(',').map(Number);
   win.webContents.on('console-message', (e) => console.log(`[renderer:${e.level}] ${e.message}`));
   win.webContents.once('did-finish-load', () => {
-    if (process.env.ATOLYE_DEMO) setTimeout(() => win.webContents.send('demo'), 1500);
+    if (process.env.ATELIER_DEMO) setTimeout(() => win.webContents.send('demo'), 1500);
     times.forEach((t, i) => setTimeout(async () => {
       const img = await win.webContents.capturePage();
       fs.writeFileSync(path.join(outDir, `snap-${i}.png`), img.toPNG());

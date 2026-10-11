@@ -4,10 +4,10 @@ const S = 'demo-session';
 
 const script = [
   [0.5, { hook_event_name: 'SessionStart', source: 'startup' }],
-  [5.5, { hook_event_name: 'UserPromptSubmit', prompt: 'giriş sayfasındaki hatayı bulup düzeltir misin?' }],
+  [5.5, { hook_event_name: 'UserPromptSubmit', prompt: 'can you find and fix the bug on the login page?' }],
   [3.0, { hook_event_name: 'PreToolUse', tool_name: 'Grep', tool_input: { pattern: 'handleLogin' } }],
   [2.5, { hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: { file_path: '/app/src/auth/login.ts' } }],
-  [2.5, { hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { description: 'Testleri inceleyecek ajan' } }],
+  [2.5, { hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { description: 'Agent to review the tests' } }],
   [0.8, { hook_event_name: 'SubagentStart', agent_id: 'demo-a1', agent_type: 'Explore' }],
   [0.6, { hook_event_name: 'SubagentStart', agent_id: 'demo-a2', agent_type: 'test-runner' }],
   [2.4, { hook_event_name: 'PreToolUse', tool_name: 'WebSearch', tool_input: { query: 'oauth token refresh race condition' } }],

@@ -1,5 +1,5 @@
 {
-  "name": "atolye",
+  "name": "atelier",
   "version": "0.1.0",
   "description": "Claude Code için 3D terminal giydirmesi",
   "main": "main.js",
@@ -20,5 +20,5 @@
     "@electron/rebuild": "^4.2.1",
     "electron": "^44.7.0"
   },
-  "productName": "Atölye"
+  "productName": "Atelier"
 }

@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Atölye</title>
+  <title>Atelier</title>
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'sha256-q6r0770JtVIRJf9PSD4+Ii79dSCPXGYv58Yh9YMlSo0='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:">
   <link rel="stylesheet" href="../node_modules/@xterm/xterm/css/xterm.css">
@@ -21,16 +21,16 @@
     <section id="stage">
       <div id="overlay"></div>
       <header id="hud">
-        <div class="brand">Atölye</div>
-        <div id="status" class="status"><span class="dot"></span><span id="status-text">Claude dışarıda</span></div>
+        <div class="brand">Atelier</div>
+        <div id="status" class="status"><span class="dot"></span><span id="status-text">Claude is out</span></div>
         <div class="actions">
-          <button id="btn-summon" title="Terminalde claude'u başlatır">Claude'u çağır</button>
-          <button id="btn-demo" class="ghost" title="Sahte olaylarla sahneyi oynatır">Demo</button>
-          <button id="btn-cam" class="ghost" title="Kamera açısını değiştir">Kamera</button>
+          <button id="btn-summon" title="Starts claude in the terminal">Summon Claude</button>
+          <button id="btn-demo" class="ghost" title="Plays the scene with fake events">Demo</button>
+          <button id="btn-cam" class="ghost" title="Change camera angle">Camera</button>
         </div>
       </header>
     </section>
-    <div id="divider" title="Sürükle"></div>
+    <div id="divider" title="Drag"></div>
     <section id="terminal-panel">
       <div class="term-bar">
         <span class="term-title">terminal</span>

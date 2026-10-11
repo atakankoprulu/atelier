@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 const on = (channel) => (fn) => ipcRenderer.on(channel, (_e, payload) => fn(payload));
 
-contextBridge.exposeInMainWorld('atolye', {
+contextBridge.exposeInMainWorld('atelier', {
   startPty: (cols, rows) => ipcRenderer.send('pty:start', { cols, rows }),
   writePty: (data) => ipcRenderer.send('pty:input', data),
   resizePty: (cols, rows) => ipcRenderer.send('pty:resize', { cols, rows }),
