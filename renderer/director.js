@@ -1,4 +1,4 @@
-// Yönetmen: Claude Code hook olaylarını sahnedeki davranışlara çevirir.
+// Director: turns Claude Code hook events into behavior in the scene.
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const short = (s, n = 38) => {
@@ -9,7 +9,7 @@ const base = (p) => String(p ?? '').split('/').filter(Boolean).pop() || '';
 const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return short(u, 24); } };
 const code = (s) => `<code>${esc(s)}</code>`;
 
-// Araç → nereye gider, ne yapar, ne der.
+// Tool → where to go, what to do, what to say.
 function activityFor(tool, input = {}) {
   switch (tool) {
     case 'Edit': case 'MultiEdit': case 'Write': case 'NotebookEdit':
@@ -88,7 +88,7 @@ export class Director {
     return c;
   }
 
-  // Claude'a yeni bir iş ver. Önceki zamanlanmış devam adımlarını geçersiz kılar.
+  // Give Claude a new task. Cancels any previously scheduled follow-up steps.
   act(spot, pose, { text, variant = '', seconds = 3.2, dwell = 2.2, onArrive } = {}) {
     const c = this.ensureClaude();
     const seq = ++c.seq;
@@ -97,7 +97,7 @@ export class Director {
     return seq;
   }
 
-  // --- ajanlar ----------------------------------------------------------------
+  // --- agents -----------------------------------------------------------------
 
   spawnAgent(ev) {
     const id = ev.agent_id || `anon-${++this.agentSeq}`;
@@ -117,7 +117,7 @@ export class Director {
       desks[slot].occupant = a;
       a.goTo(`agent${slot}`, 'type', { onArrive: () => a.say('Ready!', 1.6) });
     } else {
-      a.goTo('coffee', 'stand'); // masa kalmadıysa kahve köşesinde bekler
+      a.goTo('coffee', 'stand'); // no free desk: wait in the coffee corner
     }
     this.agents.set(id, a);
     this.updateAgentStatus();
@@ -137,7 +137,7 @@ export class Director {
         this.updateAgentStatus();
       },
     });
-    // Rapor ver: Claude buradaysa ona gidip el uzatır, sonra çıkar.
+    // Report back: walk up to Claude if present, hand over the report, then leave.
     const c = this.claude;
     a.goTo(a.slot >= 0 ? `agentReport${a.slot}` : 'coffee', 'report', {
       onArrive: () => {
@@ -163,7 +163,7 @@ export class Director {
     a.say(act.text, 2.0);
   }
 
-  // --- olaylar --------------------------------------------------------------
+  // --- events ---------------------------------------------------------------
 
   handle(ev) {
     const name = ev.hook_event_name;
@@ -180,7 +180,7 @@ export class Director {
       }
 
       case 'UserPromptSubmit': {
-        // Arka plan ajanı bitince Claude'a giden bildirim de bu olayla gelir; sen yazmadın.
+        // A background agent's completion notice to Claude also arrives as this event; you didn't type it.
         if (/^\s*<task-notification>/.test(ev.prompt || '')) {
           if (c && !c.walking) c.say('📬 Word from an agent', 2.2);
           return;
@@ -277,7 +277,7 @@ export class Director {
             const seq = c.seq;
             this.later(1.6, () => c.seq === seq && c.goTo('outside', 'stand', {
               onArrive: () => {
-                if (c.seq !== seq) return; // bu arada yeni oturum başladıysa geri döner
+                if (c.seq !== seq) return; // a new session started in the meantime: come back
                 this.world.removeCharacter(c);
                 if (this.claude === c) { this.claude = null; this.world.claude = null; }
               },

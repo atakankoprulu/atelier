@@ -32,7 +32,7 @@ html, body {
 #hud {
   position: absolute; top: 0; left: 0; right: 0;
   display: flex; align-items: center; gap: 14px;
-  padding: 12px 14px 12px 84px; /* trafik ışıklarına yer */
+  padding: 12px 14px 12px 84px; /* room for the traffic lights */
   -webkit-app-region: drag;
   background: linear-gradient(to bottom, rgba(20,18,26,.85), rgba(20,18,26,0));
 }
@@ -78,7 +78,7 @@ button.ghost { background: rgba(255,255,255,.07); color: var(--text); border: 1p
 #terminal .xterm-viewport::-webkit-scrollbar-thumb { background: #3a3546; border-radius: 4px; }
 #terminal .xterm-viewport::-webkit-scrollbar-track { background: transparent; }
 
-/* Konuşma balonları ve isim etiketleri: sahnenin üstünde HTML */
+/* Speech bubbles and name tags: HTML layered over the scene */
 .bubble {
   position: absolute; transform: translate(-50%, -100%);
   max-width: 230px; padding: 7px 10px;

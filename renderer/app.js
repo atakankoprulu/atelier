@@ -5,7 +5,7 @@ import { runDemo } from './demo.js';
 const api = window.atelier;
 const $ = (id) => document.getElementById(id);
 
-// --- 3D sahne ----------------------------------------------------------------
+// --- 3D scene ----------------------------------------------------------------
 
 const world = new World($('stage'), $('overlay'));
 const statusEl = $('status');
@@ -58,12 +58,12 @@ term.onData((d) => {
   director.userTyped();
 });
 term.onResize(({ cols, rows }) => api.resizePty(cols, rows));
-new ResizeObserver(() => { try { fit.fit(); } catch { /* panel gizliyken */ } }).observe($('terminal'));
+new ResizeObserver(() => { try { fit.fit(); } catch { /* while the panel is hidden */ } }).observe($('terminal'));
 term.focus();
 
 $('term-hint').textContent = 'To summon Claude: claude';
 
-// Senin monitörün terminalin görünen son satırlarını gösterir.
+// Your monitor in the room mirrors the visible lines of the terminal.
 let lastScreen = '';
 setInterval(() => {
   const buf = term.buffer.active;
@@ -80,11 +80,11 @@ setInterval(() => {
   }
 }, 400);
 
-// --- hook olayları ------------------------------------------------------------
+// --- hook events --------------------------------------------------------------
 
 api.onHook((ev) => director.handle(ev));
 
-// --- düğmeler ---------------------------------------------------------------
+// --- buttons ----------------------------------------------------------------
 
 $('btn-summon').addEventListener('click', () => {
   if (alive) api.writePty('claude\r');
@@ -102,7 +102,7 @@ api.onDemo(demo);
 world.setView(Number(new URLSearchParams(location.search).get('cam')) || 0);
 $('btn-cam').addEventListener('click', () => { world.nextView(); term.focus(); });
 
-// --- panel ayırıcı ----------------------------------------------------------
+// --- panel divider ----------------------------------------------------------
 
 const divider = $('divider');
 const panel = $('terminal-panel');

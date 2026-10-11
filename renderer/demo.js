@@ -1,4 +1,4 @@
-// Sahte hook olayları: Claude Code açmadan sahneyi denemek için.
+// Fake hook events for trying out the scene without running Claude Code.
 
 const S = 'demo-session';
 

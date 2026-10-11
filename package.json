@@ -1,7 +1,7 @@
 {
   "name": "atelier",
   "version": "0.1.0",
-  "description": "Claude Code için 3D terminal giydirmesi",
+  "description": "A cozy 3D workshop for Claude Code",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

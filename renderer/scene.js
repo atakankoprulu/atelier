@@ -1,5 +1,5 @@
-// 3D oda: mobilyalar, karakterler, yürüme/poz animasyonları.
-// Hiçbir model dosyası yok; her şey basit geometrilerden kurulur (low-poly görünüm).
+// The 3D room: furniture, characters, walking and pose animations.
+// No model files; everything is built from simple geometry (low-poly look).
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -15,7 +15,7 @@ const C = {
 
 const AGENT_COLORS = [0x5aa6d6, 0x7cc47f, 0xb98ad9, 0xe2b94f, 0x5fc7b8, 0xe0789a, 0x9aa3b5];
 
-// Koridor: odadaki tüm yürüyüşler bu z çizgisi üzerinden geçer.
+// Corridor: every walk in the room passes along this z line.
 const CORRIDOR_Z = 1.0;
 const SEAT_Y = 0.5;
 
@@ -47,7 +47,7 @@ function cyl(rt, rb, h, color, seg = 10) {
 function at(obj, x, y, z) { obj.position.set(x, y, z); return obj; }
 
 // ---------------------------------------------------------------------------
-// Karakter
+// Character
 // ---------------------------------------------------------------------------
 
 class Character {
@@ -58,8 +58,8 @@ class Character {
     this.scale = scale;
     this.root = new THREE.Group();
     this.root.scale.setScalar(scale);
-    this.j = {}; // eklemler
-    this.cur = {}; // mevcut eklem açıları (yumuşatılmış)
+    this.j = {}; // joints
+    this.cur = {}; // current joint angles (smoothed)
     this.path = [];
     this.speed = kind === 'agent' ? 1.9 : 1.6;
     this.spot = null;
@@ -92,7 +92,7 @@ class Character {
     world.scene.add(this.root);
   }
 
-  // İnsan (sen): kapüşonlu, kot, saçlı.
+  // Human (you): hoodie, jeans, hair.
   buildHuman() {
     this.buildBody({
       torso: C.hoodie, arm: C.hoodie, hand: C.skin, leg: C.pants, shoe: C.shoe,
@@ -102,18 +102,18 @@ class Character {
         const hair = new THREE.Mesh(new THREE.IcosahedronGeometry(0.18, 1), mat(C.hair));
         hair.scale.set(1, 0.62, 1.04);
         g.add(at(hair, 0, 0.27, -0.02));
-        g.add(at(box(0.2, 0.06, 0.12, C.hoodie), 0, 0.0, -0.1)); // kapüşon yaka
+        g.add(at(box(0.2, 0.06, 0.12, C.hoodie), 0, 0.0, -0.1)); // hood collar
         g.children.forEach((m) => { m.castShadow = true; });
         return g;
       },
     });
   }
 
-  // Claude Code maskotu: terminal banner'ındaki piksel desenin 3D hali.
-  //    ▐▛███▜▌     geniş gövde, iki koyu göz
-  //   ▝▜█████▛▘    yanlarda kısa kollar
-  //     ▘▘ ▝▝      dört bacak
-  // Bir piksel 1 birim genişlik × 2 birim yükseklik (terminal hücresi oranı).
+  // Claude Code mascot: a 3D take on the pixel art in the terminal banner.
+  //    ▐▛███▜▌     wide body, two dark eyes
+  //   ▝▜█████▛▘    short arms at the sides
+  //     ▘▘ ▝▝      four legs
+  // One pixel is 1 unit wide × 2 units tall (the aspect ratio of a terminal cell).
   buildMascot(color) {
     this.rig = 'mascot';
     const P = 0.07, R = 0.14;
@@ -128,7 +128,7 @@ class Character {
     j.hips.add(j.torso);
     j.torso.add(at(box(W, H, D, color), 0, H / 2, 0));
 
-    // Gözler: logodaki iki boşluk, ön yüzde koyu bloklar.
+    // Eyes: the two gaps in the logo, as dark blocks on the front face.
     j.eyes = at(new THREE.Group(), 0, H - 1.5 * R, D / 2);
     j.torso.add(j.eyes);
     this.eyeMeshes = [-3.5 * P, 3.5 * P].map((x) => {
@@ -137,7 +137,7 @@ class Character {
       return e;
     });
 
-    // Kollar: gövdenin yanından dışarı uzanan 2 piksellik çıkıntılar.
+    // Arms: 2-pixel stubs sticking out from the sides of the body.
     for (const side of ['l', 'r']) {
       const sx = side === 'l' ? 1 : -1;
       const arm = at(new THREE.Group(), sx * W / 2, H - 2.5 * R, 0);
@@ -149,7 +149,7 @@ class Character {
       j[side + 'Hand'] = hand;
     }
 
-    // Bacaklar: 4, 6, 11 ve 13. sütunlar.
+    // Legs: columns 4, 6, 11 and 13.
     j.legs = [-4.5, -2.5, 2.5, 4.5].map((col) => {
       const leg = at(new THREE.Group(), col * P, 0, 0);
       leg.add(at(box(P + 0.01, legH, 0.14, color), 0, -legH / 2, 0));
@@ -171,7 +171,7 @@ class Character {
     this.blinkAt = 2.5 + Math.random() * 3;
   }
 
-  // Ortak iskelet: kalça → gövde → baş; omuz → üst kol → ön kol; kalça → uyluk → baldır.
+  // Shared skeleton: hips → torso → head; shoulder → upper arm → forearm; hips → thigh → shin.
   buildBody(p) {
     this.rig = 'biped';
     const j = this.j;
@@ -217,7 +217,7 @@ class Character {
       j[side + 'Knee'] = knee;
     }
 
-    // El aksesuarları: kupa ve kitap
+    // Hand props: mug and book
     this.mug = new THREE.Group();
     this.mug.add(cyl(0.05, 0.045, 0.11, 0xf4efe6, 10));
     this.mug.add(at(box(0.02, 0.05, 0.05, 0xf4efe6), 0.06, 0, 0));
@@ -229,7 +229,7 @@ class Character {
     this.mug.visible = this.book.visible = false;
   }
 
-  // --- hareket -------------------------------------------------------------
+  // --- movement ------------------------------------------------------------
 
   placeAt(spotName) {
     const s = this.world.spots[spotName];
@@ -241,8 +241,8 @@ class Character {
 
   get walking() { return this.path.length > 0; }
 
-  // Bir noktaya git ve oraya varınca `pose` pozuna geç.
-  // Yürürken yeni hedef gelirse yol bölünmez; varınca sıradakine geçilir.
+  // Walk to a spot and switch to `pose` on arrival.
+  // A new target while walking doesn't cut the path short; it is taken up on arrival.
   goTo(spotName, pose, { onArrive = null, dwell = 0 } = {}) {
     const req = { spotName, pose, onArrive };
     const now = this.world.time;
@@ -291,7 +291,7 @@ class Character {
     if (cb) cb(this);
   }
 
-  // Bir süreliğine başka bir karaktere/noktaya dön.
+  // Turn toward another character or point for a while.
   look(target, seconds = 2.5) {
     this.lookTarget = target;
     this.lookUntil = this.world.time + seconds;
@@ -310,7 +310,7 @@ class Character {
     if (this.tag) this.tag.remove();
   }
 
-  // --- kare güncellemesi -----------------------------------------------------
+  // --- per-frame update ------------------------------------------------------
 
   update(dt) {
     const t = this.world.time;
@@ -343,7 +343,7 @@ class Character {
       if (this.lookTarget && t < this.lookUntil) {
         const lp = this.lookTarget.root ? this.lookTarget.root.position : this.lookTarget;
         target = facing(lp.x - p.x, lp.z - p.z);
-        // Otururken sadece belden dön (sandalye dönerken gövde 90°'den fazla dönmesin).
+        // While seated, turn only at the waist (the torso shouldn't turn past 90° as the chair swivels).
         if (this.isSitting()) {
           const base = this.world.spots[this.spot].face;
           let d = angLerp(0, target - base, 1);
@@ -410,11 +410,11 @@ class Character {
     } else if (pose === 'lean') {
       a.lean = -0.22;
       a.headX = -0.15;
-      a.rShX = -0.9; a.rElX = -1.4; // kupayı tutuyor
+      a.rShX = -0.9; a.rElX = -1.4; // holding the mug
       a.lShX = 0.1; a.lShZ = 0.25;
     } else if (pose === 'listen') {
       a.lean = -0.05;
-      a.headX = -0.05 + Math.sin(t * 4) * 0.04; // başını sallıyor
+      a.headX = -0.05 + Math.sin(t * 4) * 0.04; // nodding
       a.lShX = -0.3; a.rShX = -0.3; a.lElX = a.rElX = -0.6;
     } else if (pose === 'raise') {
       a.rShX = -2.9 + Math.sin(t * 6) * 0.08; a.rShZ = -0.2; a.rElX = -0.2;
@@ -427,7 +427,7 @@ class Character {
       a.rShX = -1.1; a.rElX = -0.9; a.lShX = -1.0; a.lElX = -1.0; a.lShZ = 0.4;
       a.headX = 0.35 + Math.sin(t * 0.8) * 0.04;
     } else if (pose === 'tinker') {
-      // Sunucu rafını kurcalıyor: kollar önde, sırayla uzanıyor.
+      // Tinkering with the server rack: arms forward, reaching in turn.
       a.lean = 0.12;
       a.lShX = -1.4 + Math.sin(t * 5) * 0.3; a.lElX = -0.5;
       a.rShX = -1.2 + Math.sin(t * 5 + 2) * 0.3; a.rElX = -0.6;
@@ -437,7 +437,7 @@ class Character {
       a.rShX = -0.9 - sip * 0.6; a.rElX = -1.5 - sip * 0.5; a.rShZ = 0.15;
       a.headX = -sip * 0.25;
     } else if (pose === 'report') {
-      a.rShX = -1.3; a.rElX = -0.4; // raporu uzatıyor
+      a.rShX = -1.3; a.rElX = -0.4; // handing over the report
       a.headX = 0.05;
     } else if (pose === 'scratch') {
       a.rShX = -2.6; a.rElX = -1.8; a.rShZ = -0.3;
@@ -446,7 +446,7 @@ class Character {
       a.headY = Math.sin(t * 0.5 + this.walkPhase) * 0.12;
     }
 
-    // Yumuşak geçiş
+    // Smooth transition
     const k = Math.min(1, dt * (moving ? 14 : 8));
     for (const key in a) this.cur[key] = this.cur[key] === undefined ? a[key] : lerp(this.cur[key], a[key], k);
     const c = this.cur, j = this.j;
@@ -467,7 +467,7 @@ class Character {
   animateMascot(dt, t, moving) {
     const pose = moving ? 'walk' : this.pose;
     const sitting = !moving && this.isSitting();
-    // u: kolu yukarı kaldırma, f: öne çevirme (radyan)
+    // u: raise the arm, f: swing it forward (radians)
     const a = {
       y: 0, lean: 0, roll: 0, eyeX: 0, eyeY: 0, lid: 1,
       lU: -0.15, lF: 0, rU: -0.15, rF: 0, legA: 0, legB: 0,
@@ -478,7 +478,7 @@ class Character {
       const s = Math.sin(this.walkPhase);
       a.legA = s * 0.7; a.legB = -s * 0.7;
       a.y = Math.abs(Math.cos(this.walkPhase)) * 0.035;
-      a.roll = s * 0.07; // yengeç gibi paytak yürüyüş
+      a.roll = s * 0.07; // a waddling, crab-like gait
       a.lU = 0.1 + s * 0.3; a.rU = 0.1 - s * 0.3;
       a.lean = 0.05;
     }
@@ -526,7 +526,7 @@ class Character {
       case 'drink': {
         const sip = (Math.sin(t * 1.4) + 1) / 2;
         a.rF = 1.3; a.rU = 0.1 + sip * 0.6; a.lean = -sip * 0.08;
-        if (sip > 0.85) a.lid = 0.25; // keyifle gözlerini kısar
+        if (sip > 0.85) a.lid = 0.25; // squints contentedly
         break;
       }
       case 'report':
@@ -579,7 +579,7 @@ class Character {
 }
 
 // ---------------------------------------------------------------------------
-// Dünya
+// World
 // ---------------------------------------------------------------------------
 
 export class World {
@@ -645,7 +645,7 @@ export class World {
     this.renderer.setSize(r.width, r.height, false);
     this.camera.aspect = r.width / Math.max(1, r.height);
     this.camera.updateProjectionMatrix();
-    // Dar sahnede odanın tamamı görünsün diye kamerayı geri çek (kullanıcının açısını koruyarak).
+    // On a narrow stage, pull the camera back so the whole room fits (keeping the user's angle).
     const f = Math.max(1, 1.25 / this.camera.aspect);
     const offset = this.camera.position.clone().sub(this.controls.target).multiplyScalar(f / this.fitFactor);
     this.camera.position.copy(this.controls.target).add(offset);
@@ -665,7 +665,7 @@ export class World {
     this.renderer.render(this.scene, this.camera);
   }
 
-  // --- ışık ve oda -----------------------------------------------------------
+  // --- lighting and room -----------------------------------------------------
 
   buildLights() {
     this.scene.add(new THREE.HemisphereLight(0xfff1e0, 0x3a2c22, 1.1));
@@ -687,7 +687,7 @@ export class World {
 
   buildRoom() {
     const s = this.scene;
-    // Parke zemin: şeritler
+    // Parquet floor: planks
     for (let i = 0; i < 14; i++) {
       const plank = box(12.4, 0.1, 0.65, i % 2 ? C.floor : C.floorAlt);
       plank.castShadow = false;
@@ -697,25 +697,25 @@ export class World {
     rug.castShadow = false;
     s.add(at(rug, 0.2, 0.01, 0.6));
 
-    // Arka duvar (kapı ve pencere boşluklu) ve sol duvar
+    // Back wall (with openings for the door and window) and left wall
     const H = 3.1;
     const back = (x0, x1, y0, y1) => {
       const w = box(x1 - x0, y1 - y0, 0.2, C.wall);
       s.add(at(w, (x0 + x1) / 2, (y0 + y1) / 2, -3.6));
     };
-    back(-6.2, -1.9, 0, H);        // pencerenin solu
-    back(-1.9, 0.9, 0, 1.0);       // pencere altı
-    back(-1.9, 0.9, 2.5, H);       // pencere üstü
-    back(0.9, 2.1, 0, H);          // pencere ile kapı arası
-    back(2.1, 3.2, 2.3, H);        // kapı üstü
-    back(3.2, 6.2, 0, H);          // kapının sağı
+    back(-6.2, -1.9, 0, H);        // left of the window
+    back(-1.9, 0.9, 0, 1.0);       // below the window
+    back(-1.9, 0.9, 2.5, H);       // above the window
+    back(0.9, 2.1, 0, H);          // between window and door
+    back(2.1, 3.2, 2.3, H);        // above the door
+    back(3.2, 6.2, 0, H);          // right of the door
     const left = box(0.2, H, 9.2, C.wall);
     s.add(at(left, -6.2, H / 2, 0.9));
-    // Süpürgelik
+    // Skirting board
     s.add(at(box(12.4, 0.12, 0.04, C.wallTrim), 0, 0.06, -3.48));
     s.add(at(box(0.04, 0.12, 9.2, C.wallTrim), -6.08, 0.06, 0.9));
 
-    // Pencere: gökyüzü + çerçeve
+    // Window: sky + frame
     const sky = this.makeSkyTexture();
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.5), new THREE.MeshBasicMaterial({ map: sky }));
     s.add(at(glass, -0.5, 1.75, -3.62));
@@ -725,9 +725,9 @@ export class World {
     s.add(at(box(0.08, 1.5, 0.14, frameMat), -1.9, 1.75, -3.52));
     s.add(at(box(0.08, 1.5, 0.14, frameMat), 0.9, 1.75, -3.52));
     s.add(at(box(0.05, 1.5, 0.1, frameMat), -0.5, 1.75, -3.52));
-    s.add(at(box(3.0, 0.06, 0.3, frameMat), -0.5, 0.98, -3.42)); // denizlik
+    s.add(at(box(3.0, 0.06, 0.3, frameMat), -0.5, 0.98, -3.42)); // windowsill
 
-    // Kapı: menteşe pivotlu panel
+    // Door: a panel pivoting on its hinge
     const doorFrame = mat(0x8a5a3a);
     s.add(at(box(0.1, 2.3, 0.26, doorFrame), 2.1, 1.15, -3.6));
     s.add(at(box(0.1, 2.3, 0.26, doorFrame), 3.2, 1.15, -3.6));
@@ -738,12 +738,12 @@ export class World {
     this.doorPivot.add(at(box(0.06, 0.06, 0.14, 0xd8c08a), 0.88, 1.05, 0));
     s.add(this.doorPivot);
     this.doorAngle = 0;
-    // Kapının dışı: koridor zemini (kapı açılınca görünen kısım)
+    // Outside the door: hallway floor (visible when the door opens)
     const hall = box(1.4, 0.1, 1.6, 0x4a3d33);
     hall.castShadow = false;
     s.add(at(hall, 2.65, -0.05, -4.5));
 
-    // Duvar dekorları: tablo, saat
+    // Wall decor: painting, clock
     const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.75), new THREE.MeshStandardMaterial({ map: this.makePosterTexture() }));
     s.add(at(poster, 5.5, 1.95, -3.49));
     const clock = cyl(0.26, 0.26, 0.05, 0xf4ece0, 24);
@@ -757,7 +757,7 @@ export class World {
   buildFurniture() {
     const s = this.scene;
 
-    // Ana masa: sen ve Claude yan yana
+    // Main desk: you and Claude side by side
     const desk = new THREE.Group();
     desk.add(at(box(3.2, 0.08, 1.0, C.deskTop), 0, 0.78, 0));
     for (const x of [-1.5, 1.5]) desk.add(at(box(0.08, 0.76, 0.9, C.desk), x, 0.38, 0));
@@ -765,7 +765,7 @@ export class World {
     at(desk, 0, 0, -1.35);
     s.add(desk);
 
-    // Monitörler (ekranlar canvas dokusu)
+    // Monitors (the screens are canvas textures)
     this.userScreen = this.makeScreen(512, 320);
     this.claudeScreen = this.makeScreen(512, 320);
     const mon = (x, screen, rotY) => {
@@ -777,13 +777,13 @@ export class World {
       g.add(at(face, 0, 1.32, 0.006));
       g.rotation.y = rotY;
       s.add(at(g, x, 0, -1.6));
-      // klavye
+      // keyboard
       s.add(at(box(0.5, 0.03, 0.16, 0x2a2730), x, 0.835, -1.05));
     };
     mon(-0.75, this.userScreen, 0.12);
     mon(0.75, this.claudeScreen, -0.12);
 
-    // Masa lambası, bitki, kupa
+    // Desk lamp, plant, mug
     s.add(at(cyl(0.1, 0.12, 0.04, C.metal), -1.35, 0.84, -1.6));
     const arm = box(0.03, 0.55, 0.03, C.metal);
     arm.rotation.z = 0.35;
@@ -793,7 +793,7 @@ export class World {
     s.add(at(shade, -1.12, 1.35, -1.5));
     this.addPlant(1.4, 0.82, -1.6, 0.55);
 
-    // Sandalyeler
+    // Chairs
     this.chairs = {};
     const chair = (x, z, rotY, { back = true } = {}) => {
       const g = new THREE.Group();
@@ -807,16 +807,16 @@ export class World {
       return g;
     };
     chair(-0.75, -0.6, Math.PI);
-    chair(0.75, -0.6, Math.PI, { back: false }); // Claude'a tabure: arkalık maskotu kapatmasın
+    chair(0.75, -0.6, Math.PI, { back: false }); // a stool for Claude, so no backrest hides the mascot
 
-    // Ajan masaları: sol duvar boyunca
+    // Agent desks: along the left wall
     this.agentDesks = [];
     const slotsZ = [-2.3, -0.9, 0.5, 1.9, 3.3];
     slotsZ.forEach((z) => {
       const g = new THREE.Group();
       g.add(at(box(0.75, 0.06, 1.05, C.deskTop), 0, 0.72, 0));
       for (const dz of [-0.45, 0.45]) g.add(at(box(0.65, 0.7, 0.05, C.desk), 0, 0.35, dz));
-      // dizüstü
+      // laptop
       g.add(at(box(0.32, 0.02, 0.24, C.metal), 0.08, 0.76, 0));
       const lid = new THREE.Group();
       const screen = this.makeScreen(128, 80);
@@ -836,7 +836,7 @@ export class World {
       this.agentDesks.push({ z, screen, occupant: null });
     });
 
-    // Kitaplık (arka duvar, sol)
+    // Bookshelf (back wall, left)
     const shelf = new THREE.Group();
     shelf.add(at(box(1.6, 2.3, 0.05, C.desk), 0, 1.15, -0.2));
     for (const x of [-0.78, 0.78]) shelf.add(at(box(0.05, 2.3, 0.42, C.desk), x, 1.15, 0));
@@ -854,7 +854,7 @@ export class World {
     }
     s.add(at(shelf, -3.6, 0, -3.25));
 
-    // Sunucu rafı (arka duvar, sağ) — yanıp sönen LED'ler
+    // Server rack (back wall, right) with blinking LEDs
     const rack = new THREE.Group();
     rack.add(at(box(0.8, 2.0, 0.7, 0x24222b), 0, 1.0, 0));
     this.leds = [];
@@ -868,7 +868,7 @@ export class World {
     }
     s.add(at(rack, 4.3, 0, -3.1));
 
-    // Kahve köşesi (sağ ön)
+    // Coffee corner (front right)
     const counter = new THREE.Group();
     counter.add(at(box(0.7, 0.9, 1.2, 0xe3d6c2), 0, 0.45, 0));
     counter.add(at(box(0.76, 0.05, 1.26, 0x8a6a4a), 0, 0.92, 0));
@@ -882,7 +882,7 @@ export class World {
     counter.add(at(cyl(0.05, 0.045, 0.1, 0xf4efe6), 0.05, 1.0, 0.3));
     s.add(at(counter, 5.6, 0, 1.0));
 
-    // Saksılar ve kanepe havası için puf
+    // Potted plants, and a pouf for a lounge feel
     this.addPlant(-5.5, 0, -3.1, 1.2);
     this.addPlant(5.6, 0, -1.6, 1.0);
     const pouf = cyl(0.35, 0.38, 0.38, 0x5a6fa0, 14);
@@ -903,7 +903,7 @@ export class World {
     this.scene.add(at(g, x, y, z));
   }
 
-  // --- dokular ----------------------------------------------------------------
+  // --- textures ---------------------------------------------------------------
 
   makeScreen(w, h) {
     const canvas = document.createElement('canvas');
@@ -929,7 +929,7 @@ export class World {
     g.fillRect(0, 0, 256, 128);
     g.fillStyle = '#fff3d6';
     g.beginPath(); g.arc(70, 78, 16, 0, Math.PI * 2); g.fill();
-    // Şehir silueti
+    // City skyline
     g.fillStyle = '#b06a54';
     let x = 0;
     while (x < 256) {
@@ -956,7 +956,7 @@ export class World {
     return t;
   }
 
-  // Senin ekranın: terminalin son satırları.
+  // Your screen: the last lines of the terminal.
   setUserScreenLines(lines) {
     const s = this.userScreen;
     const { ctx, w, h } = s;
@@ -976,7 +976,7 @@ export class World {
   }
 
   updateScreens(dt) {
-    // Claude'un ekranı: yazarken akan renkli kod satırları
+    // Claude's screen: colorful lines of code scrolling while it types
     const claude = this.claude;
     const s = this.claudeScreen;
     const busy = claude && !claude.walking && claude.spot === 'claudeSeat' && claude.pose === 'type';
@@ -1011,7 +1011,7 @@ export class World {
       s.texture.needsUpdate = true;
     }
 
-    // Ajan dizüstüleri
+    // Agent laptops
     for (const d of this.agentDesks) {
       const sc = d.screen;
       sc.acc = (sc.acc || 0) + dt;
@@ -1030,7 +1030,7 @@ export class World {
       sc.texture.needsUpdate = true;
     }
 
-    // Raf LED'leri ve saat
+    // Rack LEDs and the clock
     const hot = claude && claude.spot === 'rack' && claude.pose === 'tinker';
     this.leds.forEach((led, i) => {
       const on = Math.sin(this.time * (hot ? 18 : 3) + i * 1.7) > (hot ? -0.2 : 0.4);
@@ -1040,9 +1040,9 @@ export class World {
     this.screenGlow.intensity = busy ? 3.2 : 2.0;
   }
 
-  // --- yerler ------------------------------------------------------------------
+  // --- spots -------------------------------------------------------------------
 
-  // Her yer: durulacak nokta, koridora bağlanan yaklaşma noktası ve bakış yönü.
+  // Each spot: where to stand, an approach point joining the corridor, and a facing direction.
   defineSpots() {
     const sp = {};
     const add = (name, x, z, ax, az, face) => { sp[name] = { pos: { x, z }, appr: { x: ax, z: az }, face }; };
@@ -1050,13 +1050,13 @@ export class World {
     add('door', 2.65, -2.9, 2.65, -2.9, 0);
     add('userSeat', -0.75, -0.6, -0.75, 0.1, Math.PI);
     add('claudeSeat', 0.75, -0.6, 0.75, 0.1, Math.PI);
-    add('claudeSide', 1.45, -0.35, 1.45, 0.3, -Math.PI / 2 - 0.4); // sana dönüp konuşma noktası
+    add('claudeSide', 1.45, -0.35, 1.45, 0.3, -Math.PI / 2 - 0.4); // where Claude turns to talk to you
     add('shelf', -3.6, -2.55, -3.6, -2.55, Math.PI);
     add('rack', 4.3, -2.4, 4.3, -2.4, Math.PI);
     add('coffee', 4.95, 1.0, 4.95, 1.0, Math.PI / 2);
     this.agentDesks.forEach((d, i) => {
       add(`agent${i}`, -4.75, d.z, -3.9, d.z, -Math.PI / 2);
-      add(`agentReport${i}`, -0.5 + i * 0.3, 0.45, -0.5 + i * 0.3, 0.45, Math.PI); // Claude'a rapor verme noktası
+      add(`agentReport${i}`, -0.5 + i * 0.3, 0.45, -0.5 + i * 0.3, 0.45, Math.PI); // where agents report to Claude
     });
     this.spots = sp;
   }
@@ -1072,7 +1072,7 @@ export class World {
     this.doorPivot.rotation.y = this.doorAngle;
   }
 
-  // --- karakter fabrikası ---------------------------------------------------
+  // --- character factory ----------------------------------------------------
 
   addCharacter(opts) {
     const ch = new Character(this, opts);

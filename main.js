@@ -1,6 +1,6 @@
-// Atelier — Claude Code için 3D giydirme.
-// Ana süreç: gömülü terminal (node-pty), hook olaylarını dinleyen yerel HTTP sunucusu
-// ve yalnızca bu uygulamanın içindeki `claude` için geçerli hook ayarları.
+// Atelier — a 3D skin for Claude Code.
+// Main process: the embedded terminal (node-pty), a local HTTP server that listens for
+// hook events, and hook settings that apply only to `claude` inside this app.
 
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
@@ -21,7 +21,7 @@ let win = null;
 let term = null;
 let hookPort = 0;
 
-// --- Hook sunucusu -----------------------------------------------------------
+// --- Hook server -------------------------------------------------------------
 
 function startHookServer() {
   return new Promise((resolve) => {
@@ -37,18 +37,18 @@ function startHookServer() {
         try {
           const ev = JSON.parse(body);
           if (win && !win.isDestroyed()) win.webContents.send('hook', ev);
-        } catch { /* bozuk yük: yok say */ }
+        } catch { /* malformed payload: ignore */ }
       });
     });
     server.listen(0, '127.0.0.1', () => resolve(server.address().port));
   });
 }
 
-// --- Bu uygulamaya özel kabuk ortamı ------------------------------------------
+// --- App-specific shell environment -------------------------------------------
 
-// Hook ayarlarını ve zsh başlangıç dosyalarını userData altına yazar.
-// Kullanıcının ~/.claude/settings.json dosyasına dokunmaz: `claude` yalnızca
-// Atelier terminalinde `--settings` ile bu dosyayı yükleyecek şekilde sarılır.
+// Writes the hook settings and zsh startup files under userData.
+// The user's ~/.claude/settings.json is never touched: `claude` is wrapped so that
+// it loads this file via `--settings`, and only inside Atelier's terminal.
 function prepareShellEnv() {
   const dir = path.join(app.getPath('userData'), 'shell');
   const zdot = path.join(dir, 'zdotdir');
@@ -64,7 +64,7 @@ function prepareShellEnv() {
   const settingsPath = path.join(dir, 'hooks-settings.json');
   fs.writeFileSync(settingsPath, JSON.stringify({ hooks }, null, 2));
 
-  // zsh: önce kullanıcının kendi dosyaları, sonra `claude` sarmalayıcısı.
+  // zsh: the user's own files first, then the `claude` wrapper.
   const src = (f) => `[ -f "$HOME/${f}" ] && source "$HOME/${f}"\n`;
   fs.writeFileSync(path.join(zdot, '.zshenv'), src('.zshenv'));
   fs.writeFileSync(path.join(zdot, '.zprofile'), src('.zprofile'));
@@ -83,7 +83,7 @@ function startTerminal(cols, rows) {
   if (term) return;
   const { settingsPath, zdot } = prepareShellEnv();
   const shell = process.env.SHELL || '/bin/zsh';
-  // Atelier başka bir Claude oturumunun içinden açıldıysa onun izlerini taşıma.
+  // If Atelier was launched from inside another Claude session, don't carry its traces over.
   const inherited = Object.fromEntries(Object.entries(process.env)
     .filter(([k]) => !k.startsWith('CLAUDE_CODE_') && k !== 'CLAUDECODE' && !k.startsWith('ELECTRON_')));
   const env = {
@@ -109,7 +109,7 @@ function startTerminal(cols, rows) {
   });
 }
 
-// --- Pencere ------------------------------------------------------------------
+// --- Window -------------------------------------------------------------------
 
 function createWindow() {
   win = new BrowserWindow({
@@ -132,8 +132,8 @@ function createWindow() {
   if (process.env.ATELIER_SNAPSHOT) scheduleSnapshots();
 }
 
-// Geliştirme için: ATELIER_SNAPSHOT=dizin ATELIER_SNAPSHOT_AT=3000,8000 ile
-// belirli anlarda ekran görüntüsü alıp çıkar. ATELIER_DEMO=1 demoyu başlatır.
+// For development: ATELIER_SNAPSHOT=dir ATELIER_SNAPSHOT_AT=3000,8000 takes
+// screenshots at the given times, then quits. ATELIER_DEMO=1 starts the demo.
 function scheduleSnapshots() {
   const outDir = process.env.ATELIER_SNAPSHOT;
   const times = (process.env.ATELIER_SNAPSHOT_AT || '4000').split(',').map(Number);
