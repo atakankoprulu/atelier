@@ -9,6 +9,7 @@
     "postinstall": "electron-rebuild -f -w node-pty"
   },
   "type": "commonjs",
+  "license": "MIT",
   "dependencies": {
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
